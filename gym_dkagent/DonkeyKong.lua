@@ -1,6 +1,11 @@
 console.log(memory.getmemorydomainlist())
 console.log(memory.getcurrentmemorydomain())
 
+
+-- *************************************** --
+-- 	  	      Usual variables  			   --
+-- *************************************** --
+
 --
 -- Defining constants for tiles
 --
@@ -36,9 +41,6 @@ y_platforms[0x45] = 1
 for i=0x00,0x05 do y_platforms[0x46+i] = 0 end
 
 
-
-
-
 local ladders_and_platforms_tiles = {0x40, 0x41, 0x42, 0x43, 0x44, 0x45,
 									 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B}
 
@@ -60,7 +62,6 @@ y_platforms[0x3E] = 1
 
 local platforms_tiles_up = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37}
 											
-
 y_platforms[0x31] = 7
 y_platforms[0x32] = 6
 y_platforms[0x33] = 5
@@ -68,8 +69,6 @@ y_platforms[0x34] = 4
 y_platforms[0x35] = 3
 y_platforms[0x36] = 2
 y_platforms[0x37] = 1
-
-
 
 -- Sprites
 
@@ -109,20 +108,16 @@ moving_platform_sup = 0xA1
 hammer_inf = 0xF6
 hammer_sup = 0xFB
 
-
-
-
-
-
-
-
 -- Colors:
 local purple_color_background = 0x80FF00FF
 local blue_color_background = 0x800000FF
 
 
--- Usual functions
+-- *************************************** --
+-- 	  	      Usual functions  			   --
+-- *************************************** --
 
+-- To search a value in an array:
 local function has_value (tab, val)
     for index, value in pairs(tab) do
         if value == val then
@@ -133,7 +128,7 @@ local function has_value (tab, val)
     return false
 end
 
--- split a string
+-- To split a string:
 function string:split(delimiter)
   local result = { }
   local from  = 1
@@ -161,8 +156,19 @@ end
 --msg = tcp:receive()
 --console.log(msg)
 
+
+
+
+-- *************************************** --
+-- 	  	          Main Loop   			   --
+-- *************************************** --
 while true do
 	
+
+	-- *************************************** --
+	-- 	 Receving the command from the server  --
+	-- *************************************** --
+
 	local message, error
 	  message, error, receive_buffer = tcp:receive("*l", receive_buffer)
   	if message == nil then
@@ -229,146 +235,142 @@ while true do
       		print("Prediction error...")
     	end
 		request_prediction()]]--
-	end
 
-	
+		-- *************************************** --
+		-- 	  Preparing the informations to send   --
+		-- *************************************** --
 
+		-- If mario is dead, or has won, the level is considered done
+		local done 
+		if memory.read_u8(0x0096) == 255 	-- if mario dies
+		or memory.read_u8(0x0053) ~= 1 		-- if mario wins (the adress contains the level number)
+		then 
+			done = 1 
+		else 
+			done = 0 
+		end
 
+		
 
+		marioX = memory.read_u8(0x0046)
+		marioY = memory.read_u8(0x0047)
 
+		objX = memory.read_u8(0x0048)
+		objY = memory.read_u8(0x0049)
 
-
-	-- If mario is dead, we load the save
-	if memory.read_u8(0x0096) == 255 then 
-		savestate.loadslot(1)
-	end
-
-
-
-
-
-
-
-	marioX = memory.read_u8(0x0046)
-	marioY = memory.read_u8(0x0047)
-
-	objX = memory.read_u8(0x0048)
-	objY = memory.read_u8(0x0049)
-
-	local widthBox = 7
-	--gui.drawBox(marioX, marioY, marioX+widthBox, marioY+widthBox, "white", 0x80FFFFFF)
-	--gui.drawBox(objX, objY, objX+widthBox, objY+widthBox, "white", 0x80FFFFFF)
-	--gui.drawBox(marioX, marioY, marioX+widthBox, marioY+widthBox, "red", 0x80FF0000)
-
-	memory.usememorydomain("CIRAM (nametables)")
-
-	-- Looking for the background (platforms, ladders, etc)
-	for i=0x000,0x039F do
-		-- We read the tile value
-		local tile = memory.read_u8(0x0000+i)
-
-		-- We get the position of the tile based on its offset
-		local x = (i % 32) * 8
-		local y = math.floor(i / 32) * 8
-
-		-- TODO : else of using "has_value", write conditions like x < tile < y
+		local widthBox = 7
+		--gui.drawBox(marioX, marioY, marioX+widthBox, marioY+widthBox, "white", 0x80FFFFFF)
+		--gui.drawBox(objX, objY, objX+widthBox, objY+widthBox, "white", 0x80FFFFFF)
+		--gui.drawBox(marioX, marioY, marioX+widthBox, marioY+widthBox, "red", 0x80FF0000)
 
 
-		-- If it's a platform from down
-		if has_value(platforms_tiles_down,tile) then
-			local yp = y_platforms[tile]
 
-			gui.drawBox(x, y+yp, x+widthBox, y+7, "purple", purple_color_background)
+		memory.usememorydomain("CIRAM (nametables)")
 
-		-- If it's a platform from up
-		elseif has_value(platforms_tiles_up,tile) then
-			local yp = y_platforms[tile]
+		-- Looking for the background (platforms, ladders, etc)
+		for i=0x000,0x039F do
+			-- We read the tile value
+			local tile = memory.read_u8(0x0000+i)
 
-			gui.drawBox(x, y, x+widthBox, y+yp-1, "purple", purple_color_background)
+			-- We get the position of the tile based on its offset
+			local x = (i % 32) * 8
+			local y = math.floor(i / 32) * 8
 
-		elseif has_value(ladders_tiles, tile) then
-			gui.drawBox(x, y, x+widthBox, y+widthBox, "blue", blue_color_background)
+			-- TODO : else of using "has_value", write conditions like x < tile < y
 
-		elseif has_value(ladders_and_platforms_tiles, tile) then
 
-			local yl = y_ladders[tile]
-			local yp = y_platforms[tile]
+			-- If it's a platform from down
+			if has_value(platforms_tiles_down,tile) then
+				local yp = y_platforms[tile]
 
-			-- If ladder is on the platform
-			if yl < yp then
+				gui.drawBox(x, y+yp, x+widthBox, y+7, "purple", purple_color_background)
 
-				gui.drawBox(x, y, x+widthBox, y+yp-1, "blue", blue_color_background)
-				gui.drawBox(x, y+yp, x+widthBox, y+8, "purple", purple_color_background)
+			-- If it's a platform from up
+			elseif has_value(platforms_tiles_up,tile) then
+				local yp = y_platforms[tile]
 
-			-- Else, the ladder	is under the platform
+				gui.drawBox(x, y, x+widthBox, y+yp-1, "purple", purple_color_background)
+
+			elseif has_value(ladders_tiles, tile) then
+				gui.drawBox(x, y, x+widthBox, y+widthBox, "blue", blue_color_background)
+
+			elseif has_value(ladders_and_platforms_tiles, tile) then
+
+				local yl = y_ladders[tile]
+				local yp = y_platforms[tile]
+
+				-- If ladder is on the platform
+				if yl < yp then
+
+					gui.drawBox(x, y, x+widthBox, y+yp-1, "blue", blue_color_background)
+					gui.drawBox(x, y+yp, x+widthBox, y+8, "purple", purple_color_background)
+
+				-- Else, the ladder	is under the platform
+				else
+
+					gui.drawBox(x, y, x+widthBox, y+yl-1, "purple", purple_color_background)
+					gui.drawBox(x, y+yl, x+widthBox, y+8, "blue", blue_color_background)
+
+				end
 			else
-
-				gui.drawBox(x, y, x+widthBox, y+yl-1, "purple", purple_color_background)
-				gui.drawBox(x, y+yl, x+widthBox, y+8, "blue", blue_color_background)
-
+				--[[gui.drawBox(x, y, x+widthBox, y+widthBox, "white", 0x50FFFFFF)]]--
 			end
-		else
-			--[[gui.drawBox(x, y, x+widthBox, y+widthBox, "white", 0x50FFFFFF)]]--
 		end
-	end
 
-	-- Looking for objects in the scene
-	memory.usememorydomain("System Bus")
-	for i=0,64 do
-		local offset = 4 * i
-		
-		-- Retrieving the points of the sprites
-		local upleftx = memory.read_u8(0x0203+offset)
-		local uplefty = memory.read_u8(0x0200+offset)
-		local sprite = memory.read_u8(0x0201+offset)
-
-
-
-		local color = "white"
-		local background_color = 0x80FFFFFF
-		
-		if 	mario_inf1 <= sprite and sprite <= mario_sup1
-		or 	mario_inf2 <= sprite and sprite <= mario_sup2
-		or 	mario_inf3 <= sprite and sprite <= mario_sup3
-		or 	mario_inf4 <= sprite and sprite <= mario_sup4 then
-
-			color = "yellow"
-			background_color = 0x80FFFF00
+		-- Looking for objects in the scene
+		memory.usememorydomain("System Bus")
+		for i=0,64 do
+			local offset = 4 * i
 			
-		elseif  enemy_inf1 <= sprite and sprite <= enemy_sup1
-			or 	enemy_inf2 <= sprite and sprite <= enemy_sup2
-			or 	enemy_inf3 <= sprite and sprite <= enemy_sup3
-			or 	enemy_inf4 <= sprite and sprite <= enemy_sup4
-			or 	enemy_inf5 <= sprite and sprite <= enemy_sup5 then
+			-- Retrieving the points of the sprites
+			local upleftx = memory.read_u8(0x0203+offset)
+			local uplefty = memory.read_u8(0x0200+offset)
+			local sprite = memory.read_u8(0x0201+offset)
 
-			color = "red"
-			background_color = 0x80FF0000
-		
-		elseif moving_platform_inf <= sprite and sprite <= moving_platform_sup then
 
-			color = "purple"
-			background_color = purple_color_background
 
-		elseif hammer_inf <= sprite and sprite <= hammer_sup then
-			color = "orange"
-			background_color = 0x80FFFF00
+			local color = "white"
+			local background_color = 0x80FFFFFF
+			
+			if 	mario_inf1 <= sprite and sprite <= mario_sup1
+			or 	mario_inf2 <= sprite and sprite <= mario_sup2
+			or 	mario_inf3 <= sprite and sprite <= mario_sup3
+			or 	mario_inf4 <= sprite and sprite <= mario_sup4 then
+
+				color = "yellow"
+				background_color = 0x80FFFF00
+				
+			elseif  enemy_inf1 <= sprite and sprite <= enemy_sup1
+				or 	enemy_inf2 <= sprite and sprite <= enemy_sup2
+				or 	enemy_inf3 <= sprite and sprite <= enemy_sup3
+				or 	enemy_inf4 <= sprite and sprite <= enemy_sup4
+				or 	enemy_inf5 <= sprite and sprite <= enemy_sup5 then
+
+				color = "red"
+				background_color = 0x80FF0000
+			
+			elseif moving_platform_inf <= sprite and sprite <= moving_platform_sup then
+
+				color = "purple"
+				background_color = purple_color_background
+
+			elseif hammer_inf <= sprite and sprite <= hammer_sup then
+				color = "orange"
+				background_color = 0x80FFFF00
+			end
+
+
+
+			-- Drawing the box around the sprites
+			gui.drawBox(upleftx, uplefty, upleftx+widthBox, uplefty+widthBox+1, color, background_color)
+			
 		end
 
+		local marioStat = memory.read_u8(0x0096)
 
-
-		-- Drawing the box around the sprites
-		gui.drawBox(upleftx, uplefty, upleftx+widthBox, uplefty+widthBox+1, color, background_color)
-		
+		-- Sending information to the Python script so it can return the controls to perform:
+		tcp:send("DKMSG:0:" .. marioStat .. ":" .. done .. "\n")
 	end
-
-	-- Sending information to the Python script so it can return the controls to perform:
-	--tcp:send("bonjour du lua")
-
-	
-
-	
-	
-	emu.frameadvance();
 end
 
 tcp:close()
