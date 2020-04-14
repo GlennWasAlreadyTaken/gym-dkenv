@@ -95,16 +95,19 @@ class DKServer():
         Gets the answer sent by the 
     """
     def getAnswer(self):
-        #msg = self.connection.recv(1024).decode()
-        msg = "blabla"
+        msg = self.connection.recv(1024).decode()
+        self.buffer = ""
+        
         if msg.startswith("DKMSG"):
             parsedMsg = msg.split(":")
             
+            print(parsedMsg)
+            self.buffer = msg
             # Get every needed information
             # background, objects, reward, done
         
         
-        return msg
+        return self.buffer
     
     """
         Sends an action to the client. 
