@@ -120,6 +120,9 @@ hammer_sup = 0xFB
 local purple_color_background = 0x80FF00FF
 local blue_color_background = 0x800000FF
 
+
+-- Usual functions
+
 local function has_value (tab, val)
     for index, value in pairs(tab) do
         if value == val then
@@ -128,6 +131,20 @@ local function has_value (tab, val)
     end
 
     return false
+end
+
+-- split a string
+function string:split(delimiter)
+  local result = { }
+  local from  = 1
+  local delim_from, delim_to = string.find( self, delimiter, from  )
+  while delim_from do
+    table.insert( result, string.sub( self, from , delim_from-1 ) )
+    from  = delim_to + 1
+    delim_from, delim_to = string.find( self, delimiter, from  )
+  end
+  table.insert( result, string.sub( self, from  ) )
+  return result
 end
 
 
@@ -146,6 +163,81 @@ end
 
 while true do
 	
+	local message, error
+	  message, error, receive_buffer = tcp:receive("*l", receive_buffer)
+  	if message == nil then
+    	if error ~= "timeout" then
+      		print("Receive failed: ", error); break
+    	end
+	else
+		-- If the server ask us to reset, we load the checkpoint save
+		if message == "RESET" then
+			savestate.loadslot(1)
+			
+		else
+			action = message:split(':')
+			--[[ Controls:
+				"P1 A"
+				"P1 B"
+				"P1 Down"
+				"P1 Left"
+				"P1 Right"
+				"P1 Select"
+				"P1 Start"
+				"P1 Up"
+				"Power"
+				"Reset"
+			]]--
+
+			-- We get the control table
+			controlTable = joypad.get()
+			
+			-- If the server wants the A button to be pressed, we mark it as pressed in the control table
+			controlTable["P1 A"] = (action[2] == "1")
+
+			-- We do the same with directions:
+			direction = action[1]
+			if direction == "1" then
+				controlTable["P1 Left"] = true
+				console.log("left")
+			elseif direction == "2" then
+				controlTable["P1 Right"] = true
+				console.log("right")
+			elseif direction == "3" then
+				controlTable["P1 Up"] = true
+				console.log("up")
+			elseif direction == "4" then
+				controlTable["P1 Down"] = true
+				console.log("down")
+			end
+
+			-- Lastly, we set the control table.
+			joypad.set(controlTable)
+		end
+
+		emu.frameadvance()
+		--[[
+    	if message ~= "PREDICTIONERROR" then
+      		current_action = tonumber(message)
+      		for i=1, WAIT_FRAMES do
+				joypad.set({["P1 A"] = true})
+				joypad.setanalog({["P1 X Axis"] = util.convertSteerToJoystick(current_action) })
+				draw_info()
+				emu.frameadvance()
+      		end
+    	else
+      		print("Prediction error...")
+    	end
+		request_prediction()]]--
+	end
+
+	
+
+
+
+
+
+
 	-- If mario is dead, we load the save
 	if memory.read_u8(0x0096) == 255 then 
 		savestate.loadslot(1)
@@ -272,33 +364,8 @@ while true do
 	-- Sending information to the Python script so it can return the controls to perform:
 	--tcp:send("bonjour du lua")
 
-
-
-
-
-
-
-
-
-	--[[ Controls:
-		"P1 A"
-		"P1 B"
-		"P1 Down"
-		"P1 Left"
-		"P1 Right"
-		"P1 Select"
-		"P1 Start"
-		"P1 Up"
-		"Power"
-		"Reset"
-		]]--
 	
-	--[[
-	controlTable = joypad.get()
-	controlTable["P1 Right"] = true
-	joypad.set(controlTable)
-	]]--
-	
+
 	
 	
 	emu.frameadvance();
