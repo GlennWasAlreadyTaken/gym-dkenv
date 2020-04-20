@@ -240,6 +240,17 @@ while true do
 		-- *************************************** --
 
 		local reward = 0
+		marioX = memory.read_u8(0x0046)
+
+		marioY = memory.read_u8(0x0047)
+
+		console.log(marioY)
+		if marioY < minMarioY then 
+			minMarioY = marioY
+			reward = 0.5
+		end
+
+
 
 		-- If mario is dead, or has won, the level is considered done
 		local done = 0
@@ -251,15 +262,7 @@ while true do
 			reward = 1000
 		end
 
-		marioX = memory.read_u8(0x0046)
-
-		marioY = memory.read_u8(0x0047)
-
-		console.log(marioY)
-		if marioY < minMarioY then 
-			minMarioY = marioY
-			reward = 0.5
-		end
+		
 
 
 		objX = memory.read_u8(0x0048)
