@@ -48,7 +48,6 @@ class DKEnv(gym.Env):
             direction, aButton = inputMsg.split(":")
             
             self.server.sendAction(int(direction), int(aButton))
-            self.server.resetClient()
             
         self.server.resetClient()
         self.server.close()
