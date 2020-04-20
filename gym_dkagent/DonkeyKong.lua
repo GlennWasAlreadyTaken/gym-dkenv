@@ -164,7 +164,7 @@ end
 -- function resetEnv
 
 
-local maxMarioY = 0
+local minMarioY = 0
 
 -- *************************************** --
 -- 	  	          Main Loop   			   --
@@ -188,6 +188,8 @@ while true do
 			savestate.loadslot(1)
 			console.log("reset the save")
 			emu.frameadvance()
+
+			minMarioY = memory.read_u8(0x0047) -- we set the minMarioY to the marioY pos value.
 
 		else
 			action = message:split(':')
@@ -250,10 +252,12 @@ while true do
 		end
 
 		marioX = memory.read_u8(0x0046)
+
 		marioY = memory.read_u8(0x0047)
 
-		if marioY > maxMarioY then 
-			maxMarioY = marioY
+		console.log(marioY)
+		if marioY < minMarioY then 
+			minMarioY = marioY
 			reward = 0.5
 		end
 
