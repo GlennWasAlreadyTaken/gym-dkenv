@@ -36,7 +36,7 @@ class DKServer():
         self.buffer = ""
         
         if msg.startswith("DKMSG"):
-            parsedMsg = msg.split(":")
+            parsedMsg = msg.split(":.:")
             
             print(parsedMsg)
             self.buffer = msg

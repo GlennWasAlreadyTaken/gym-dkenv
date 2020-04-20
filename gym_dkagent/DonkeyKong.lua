@@ -109,8 +109,10 @@ hammer_inf = 0xF6
 hammer_sup = 0xFB
 
 -- Colors:
-local purple_color_background = 0x80FF00FF
-local blue_color_background = 0x800000FF
+--local purple_color_background = 0x80FF00FF
+local purple_color_background = "purple"
+--local blue_color_background = 0x800000FF
+local blue_color_background = "blue"
 
 
 -- *************************************** --
@@ -157,18 +159,23 @@ end
 --console.log(msg)
 
 
+-- Resets the environnement and draws the background of the game
+-- todo ? it exists several layers of drawings
+-- function resetEnv
 
+
+local maxMarioY = 0
 
 -- *************************************** --
 -- 	  	          Main Loop   			   --
 -- *************************************** --
 while true do
 	
+	
 
 	-- *************************************** --
 	-- 	 Receving the command from the server  --
-	-- *************************************** --
-
+	-- *************************************** --	
 	local message, error
 	  message, error, receive_buffer = tcp:receive("*l", receive_buffer)
   	if message == nil then
@@ -179,7 +186,9 @@ while true do
 		-- If the server ask us to reset, we load the checkpoint save
 		if message == "RESET" then
 			savestate.loadslot(1)
-			
+			console.log("reset the save")
+			emu.frameadvance()
+
 		else
 			action = message:split(':')
 			--[[ Controls:
@@ -205,55 +214,49 @@ while true do
 			direction = action[1]
 			if direction == "1" then
 				controlTable["P1 Left"] = true
-				console.log("left")
+				--console.log("left")
 			elseif direction == "2" then
 				controlTable["P1 Right"] = true
-				console.log("right")
+				--console.log("right")
 			elseif direction == "3" then
 				controlTable["P1 Up"] = true
-				console.log("up")
+				--console.log("up")
 			elseif direction == "4" then
 				controlTable["P1 Down"] = true
-				console.log("down")
+				--console.log("down")
 			end
 
 			-- Lastly, we set the control table.
 			joypad.set(controlTable)
 		end
-
+	
 		emu.frameadvance()
-		--[[
-    	if message ~= "PREDICTIONERROR" then
-      		current_action = tonumber(message)
-      		for i=1, WAIT_FRAMES do
-				joypad.set({["P1 A"] = true})
-				joypad.setanalog({["P1 X Axis"] = util.convertSteerToJoystick(current_action) })
-				draw_info()
-				emu.frameadvance()
-      		end
-    	else
-      		print("Prediction error...")
-    	end
-		request_prediction()]]--
-
+		
+		--gui.clearGraphics()
 		-- *************************************** --
 		-- 	  Preparing the informations to send   --
 		-- *************************************** --
 
-		-- If mario is dead, or has won, the level is considered done
-		local done 
-		if memory.read_u8(0x0096) == 255 	-- if mario dies
-		or memory.read_u8(0x0053) ~= 1 		-- if mario wins (the adress contains the level number)
-		then 
-			done = 1 
-		else 
-			done = 0 
-		end
+		local reward = 0
 
-		
+		-- If mario is dead, or has won, the level is considered done
+		local done = 0
+		if memory.read_u8(0x0096) == 255 then 	-- if mario dies
+			done = 1 
+			reward = -1000
+		elseif memory.read_u8(0x0053) ~= 1 then		-- if mario wins (the adress contains the level number) 
+			done = 1
+			reward = 1000
+		end
 
 		marioX = memory.read_u8(0x0046)
 		marioY = memory.read_u8(0x0047)
+
+		if marioY > maxMarioY then 
+			maxMarioY = marioY
+			reward = 0.5
+		end
+
 
 		objX = memory.read_u8(0x0048)
 		objY = memory.read_u8(0x0049)
@@ -266,7 +269,9 @@ while true do
 
 
 		memory.usememorydomain("CIRAM (nametables)")
-
+		
+		gui.drawBox(0, 0, 256, 239, "black", "black")
+		
 		-- Looking for the background (platforms, ladders, etc)
 		for i=0x000,0x039F do
 			-- We read the tile value
@@ -330,7 +335,8 @@ while true do
 
 
 			local color = "white"
-			local background_color = 0x80FFFFFF
+			--local background_color = 0x80FFFFFF
+			local background_color = "white"
 			
 			if 	mario_inf1 <= sprite and sprite <= mario_sup1
 			or 	mario_inf2 <= sprite and sprite <= mario_sup2
@@ -338,7 +344,8 @@ while true do
 			or 	mario_inf4 <= sprite and sprite <= mario_sup4 then
 
 				color = "yellow"
-				background_color = 0x80FFFF00
+				--background_color = 0x80FFFF00
+				background_color = "yellow"
 				
 			elseif  enemy_inf1 <= sprite and sprite <= enemy_sup1
 				or 	enemy_inf2 <= sprite and sprite <= enemy_sup2
@@ -347,16 +354,21 @@ while true do
 				or 	enemy_inf5 <= sprite and sprite <= enemy_sup5 then
 
 				color = "red"
-				background_color = 0x80FF0000
+				--background_color = 0x80FF0000
+				background_color = "red"
 			
 			elseif moving_platform_inf <= sprite and sprite <= moving_platform_sup then
 
 				color = "purple"
-				background_color = purple_color_background
+				--background_color = purple_color_background
+				background_color = "purple"
+
 
 			elseif hammer_inf <= sprite and sprite <= hammer_sup then
-				color = "orange"
-				background_color = 0x80FFFF00
+				color = "green"
+				--background_color = 0x80FFFF00
+				background_color = "green"
+
 			end
 
 
@@ -366,10 +378,14 @@ while true do
 			
 		end
 
-		local marioStat = memory.read_u8(0x0096)
+		gui.DrawFinish()
+		console.log("ready to take screenshot")
+		--local marioStat = memory.read_u8(0x0096)
 
+		local path = "D:/INGE_INFO_ANNEE_3/IA_Jeux/DKAgent/screenshots/frame.png"
+		client.screenshot(path)
 		-- Sending information to the Python script so it can return the controls to perform:
-		tcp:send("DKMSG:0:" .. marioStat .. ":" .. done .. "\n")
+		tcp:send("DKMSG:.:" .. path .. ":.:" .. reward .. ":.:" .. done .. "\n")
 	end
 end
 
