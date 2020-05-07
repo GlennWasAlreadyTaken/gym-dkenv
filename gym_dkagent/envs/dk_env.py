@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import gym
 import threading
+import random
 from dk_server import DKServer
 
 class DKEnv(gym.Env):
@@ -38,8 +39,9 @@ class DKEnv(gym.Env):
         
         inputMsg = ""
         while True:
-            print("Enter input:")
-            inputMsg = input()
+            #print("Enter input:")
+            #inputMsg = input()
+            inputMsg = str(2) + ":" + str(random.randint(0,1))
             if inputMsg == "bye":
                 break;
                 
@@ -47,7 +49,11 @@ class DKEnv(gym.Env):
             
             direction, aButton = inputMsg.split(":")
             
-            self.server.sendAction(int(direction), int(aButton))
+            answer = self.server.sendAction(int(direction), int(aButton))
+            #print(answer)
+            if int(answer[2]) == 1:
+                print("MARIO IS DEAD")
+                self.server.resetClient()
             
         self.server.resetClient()
         self.server.close()

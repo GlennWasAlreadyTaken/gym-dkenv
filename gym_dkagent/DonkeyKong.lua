@@ -244,7 +244,7 @@ while true do
 
 		marioY = memory.read_u8(0x0047)
 
-		console.log(marioY)
+		--console.log(marioY)
 		if marioY < minMarioY then 
 			minMarioY = marioY
 			reward = 0.5
@@ -258,7 +258,7 @@ while true do
 			done = 1 
 			reward = -1000
 		elseif memory.read_u8(0x0053) ~= 1 then		-- if mario wins (the adress contains the level number) 
-			done = 1
+			done = 0
 			reward = 1000
 		end
 
@@ -386,13 +386,13 @@ while true do
 		end
 
 		gui.DrawFinish()
-		console.log("ready to take screenshot")
+		--console.log("ready to take screenshot")
 		--local marioStat = memory.read_u8(0x0096)
 
 		local path = "D:/INGE_INFO_ANNEE_3/IA_Jeux/DKAgent/screenshots/frame.png"
 		client.screenshot(path)
 		-- Sending information to the Python script so it can return the controls to perform:
-		tcp:send("DKMSG:.:" .. path .. ":.:" .. reward .. ":.:" .. done .. "\n")
+		tcp:send("DKMSG:.:" .. path .. ":.:" .. reward .. ":.:" .. done)
 	end
 end
 

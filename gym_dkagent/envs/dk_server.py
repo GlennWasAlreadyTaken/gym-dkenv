@@ -37,9 +37,9 @@ class DKServer():
         
         if msg.startswith("DKMSG"):
             parsedMsg = msg.split(":.:")
+            parsedMsg.pop(0)
             
-            print(parsedMsg)
-            self.buffer = msg
+            self.buffer = parsedMsg
             # Get every needed information
             # background, objects, reward, done
         
