@@ -230,6 +230,15 @@ while true do
 
 			-- Lastly, we set the control table.
 			joypad.set(controlTable)
+			-- We forward the game by a few frames :
+			emu.frameadvance()
+			joypad.set(controlTable)
+			emu.frameadvance()
+			joypad.set(controlTable)
+			emu.frameadvance()
+			joypad.set(controlTable)
+			emu.frameadvance()
+			joypad.set(controlTable)
 		end
 	
 		emu.frameadvance()
