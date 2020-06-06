@@ -99,7 +99,7 @@ class DKEnv(gym.Env):
 
         # ddqn
 
-        self.server.sendAction(0,0)
+        path, reward, terminal = self.server.sendAction(0,0)
 
         im = imageio.imread(path)
         im=np.dot(im[...,:3], [0.299, 0.587, 0.114])
