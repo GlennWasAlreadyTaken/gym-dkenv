@@ -230,6 +230,15 @@ while true do
 
 			-- Lastly, we set the control table.
 			joypad.set(controlTable)
+			-- We forward the game by a few frames :
+			emu.frameadvance()
+			joypad.set(controlTable)
+			emu.frameadvance()
+			joypad.set(controlTable)
+			emu.frameadvance()
+			joypad.set(controlTable)
+			emu.frameadvance()
+			joypad.set(controlTable)
 		end
 	
 		emu.frameadvance()
@@ -257,8 +266,8 @@ while true do
 		if memory.read_u8(0x0096) == 255 then 	-- if mario dies
 			done = 1 
 			reward = -1000
-		elseif memory.read_u8(0x0053) ~= 1 then		-- if mario wins (the adress contains the level number) 
-			done = 0
+		elseif memory.read_u8(0x0053) == 3 then		-- if mario wins (the adress contains the level number) 
+			done = 1
 			reward = 1000
 		end
 
