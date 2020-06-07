@@ -79,9 +79,9 @@ GAMMA = 0.99
 MEMORY_SIZE = 900000
 BATCH_SIZE = 32
 TRAINING_FREQUENCY = 4
-TARGET_NETWORK_UPDATE_FREQUENCY = 40000
-MODEL_PERSISTENCE_UPDATE_FREQUENCY = 1000#10000
-REPLAY_START_SIZE = 50000#50000
+TARGET_NETWORK_UPDATE_FREQUENCY = 40#40000
+MODEL_PERSISTENCE_UPDATE_FREQUENCY = 100#10000
+REPLAY_START_SIZE = 50#50000
 
 EXPLORATION_MAX = 1.0
 EXPLORATION_MIN = 0.1
@@ -225,7 +225,7 @@ class DDQNTrainer(DDQNGameModel):
     def move(self, state):
         if np.random.rand() < self.epsilon or len(self.memory) < REPLAY_START_SIZE:
             return random.randrange(self.action_space)
-        q_values = self.ddqn.predict(np.expand_dims(np.asarray(state).astype(np.float64), axis=0), batch_size=1)
+        q_values = self.ddqn.predict(np.expand_dims(np.expand_dims(np.asarray(state).astype(np.float64), axis=0),axis=0), batch_size=1)
         return np.argmax(q_values[0])
 
     def remember(self, current_state, action, reward, next_state, terminal):
