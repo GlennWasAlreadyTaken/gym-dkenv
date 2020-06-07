@@ -186,7 +186,6 @@ while true do
 		-- If the server ask us to reset, we load the checkpoint save
 		if message == "RESET" then
 			savestate.loadslot(1)
-			console.log("reset the save")
 			emu.frameadvance()
 
 			minMarioY = memory.read_u8(0x0047) -- we set the minMarioY to the marioY pos value.

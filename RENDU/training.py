@@ -19,6 +19,10 @@ def dk(EPISODES,STEP_MAX,render):
     #action_space=env.action_space
     action_space=8
     game_model = DDQNTrainer('donkey_kong', (1,224, 256), action_space)
+
+    if os.path.isfile("./output/neural_nets/donkey_kong/ddqn/loading/model.h5"):
+            game_model.ddqn.load_weights("./output/neural_nets/donkey_kong/ddqn/loading/model.h5")
+
     
     final = []
     run = 0
